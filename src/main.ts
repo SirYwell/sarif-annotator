@@ -1,16 +1,56 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import {Converter, Output} from './converter'
+import {context, getOctokit} from '@actions/github'
+import {Log} from 'sarif'
+import {QodanaConverter} from './qodana-converter'
+import {getInput} from '@actions/core'
+
+const name = 'SARIF Annotator'
+
+function createConverter(): Converter {
+  switch (getInput('source').toLowerCase()) {
+    case 'qodana':
+      return new QodanaConverter()
+    default:
+      return new Converter()
+  }
+}
+
+async function publishOutput(output: Output): Promise<void> {
+  const octokit = getOctokit(getInput('token'))
+  let sha = context.sha
+  if (context.payload.pull_request) {
+    sha = context.payload.pull_request.head.sha
+  }
+
+  const request = {
+    ...context.repo,
+    ref: sha
+  }
+
+  const result = await octokit.rest.checks.listForRef(request)
+  const exists =
+    result.data.check_runs.filter(check => check.name === name).length > 0
+  if (exists) {
+    await octokit.rest.checks.create({
+      ...context.repo,
+      head_sha: sha,
+      conclusion: 'failure', // TODO
+      name,
+      status: 'completed',
+      output
+    })
+    // eslint-disable-next-line no-empty
+  } else {
+  }
+}
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
+    const converter = createConverter()
+    const log: Log = JSON.parse('')
+    const output = converter.convert(log)
+    await publishOutput(output)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
