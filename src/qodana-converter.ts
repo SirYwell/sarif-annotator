@@ -1,11 +1,10 @@
 import {Annotation, AnnotationLevel, Converter} from './converter'
+// eslint-disable-next-line import/no-unresolved
 import {Log, Result} from 'sarif'
 
 export class QodanaConverter extends Converter {
   createTitle(log: Log): string {
-    return log.runs[0].results?.length
-      ? 'Problems detected!'
-      : 'Everything is fine!'
+    return log.runs[0].results?.length ? 'Problems detected!' : 'Everything is fine!'
   }
 
   createSummary(log: Log): string {
@@ -21,9 +20,7 @@ export class QodanaConverter extends Converter {
     if (!log.runs[0].results) {
       return null
     }
-    return log.runs[0].results
-      .map(result => createAnnotation(result))
-      .filter(notEmpty)
+    return log.runs[0].results.map(result => createAnnotation(result)).filter(notEmpty)
   }
 }
 
@@ -46,18 +43,14 @@ function createAnnotation(result: Result): Annotation | null {
   return {
     path: physLoc.artifactLocation.uri,
     start_line: physLoc.region.startLine,
-    end_line: physLoc.region.endLine
-      ? physLoc.region.endLine
-      : physLoc.region.startLine,
+    end_line: physLoc.region.endLine ? physLoc.region.endLine : physLoc.region.startLine,
     // annotations only support columns in one line
     start_column:
       physLoc.region.startLine === physLoc.region.endColumn
         ? physLoc.region.startColumn
         : undefined,
     end_column:
-      physLoc.region.startLine === physLoc.region.endColumn
-        ? physLoc.region.endColumn
-        : undefined,
+      physLoc.region.startLine === physLoc.region.endColumn ? physLoc.region.endColumn : undefined,
     annotation_level: level,
     message: result.message.text ?? result.message.markdown ?? '',
     title: result.ruleId

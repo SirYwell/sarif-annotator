@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import {Log} from 'sarif'
 
 export class Converter {

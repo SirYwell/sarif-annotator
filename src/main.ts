@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import {Converter, Output} from './converter'
 import {context, getOctokit} from '@actions/github'
+// eslint-disable-next-line import/no-unresolved
 import {Log} from 'sarif'
 import {QodanaConverter} from './qodana-converter'
 import {getInput} from '@actions/core'
@@ -29,8 +30,7 @@ async function publishOutput(output: Output): Promise<void> {
   }
 
   const result = await octokit.rest.checks.listForRef(request)
-  const exists =
-    result.data.check_runs.filter(check => check.name === name).length > 0
+  const exists = result.data.check_runs.filter(check => check.name === name).length > 0
   if (exists) {
     await octokit.rest.checks.create({
       ...context.repo,
