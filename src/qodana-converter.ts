@@ -1,24 +1,28 @@
 import {Annotation, AnnotationLevel, Converter} from './converter'
 // eslint-disable-next-line import/no-unresolved
-import {Log, Result} from 'sarif'
+import {Log, Message, Result} from 'sarif'
+import {groupWith} from 'ramda'
 
 export class QodanaConverter extends Converter {
   createTitle(log: Log): string {
-    return log.runs[0].results?.length ? 'Problems detected!' : 'Everything is fine!'
+    return `${log.runs[0].tool.driver.fullName ?? 'Qodana'} Report`
   }
 
   createSummary(log: Log): string {
     // As of now, Qodana only generates files with one run
-    return `Qodana detected ${log.runs[0].results?.length} problem(s)`
+    return `A total of ${log.runs[0].results?.length} problem(s) were found.`
   }
 
-  createText(log: Log): string | null {
-    return super.createText(log)
+  createText(log: Log): string {
+    return groupWith((a, b) => a.ruleId === b.ruleId, log.runs[0].results ?? [])
+      .sort((a, b) => b.length - a.length)
+      .map(a => `${a.length}x ${a[0].ruleId}`)
+      .join('\n')
   }
 
-  createAnnotations(log: Log): Annotation[] | null {
+  createAnnotations(log: Log): Annotation[] {
     if (!log.runs[0].results) {
-      return null
+      return []
     }
     return log.runs[0].results.map(result => createAnnotation(result)).filter(notEmpty)
   }
@@ -52,9 +56,16 @@ function createAnnotation(result: Result): Annotation | null {
     end_column:
       physLoc.region.startLine === physLoc.region.endColumn ? physLoc.region.endColumn : undefined,
     annotation_level: level,
-    message: result.message.text ?? result.message.markdown ?? '',
+    message: stringFromMessage(result.message),
     title: result.ruleId
   }
+}
+
+const regex = RegExp(/<\/?\w+>/g)
+
+function stringFromMessage(message: Message): string {
+  const text = message.text ?? message.markdown ?? ''
+  return text.replace(regex, `'`)
 }
 
 function convertLevel(l: string | undefined): AnnotationLevel {

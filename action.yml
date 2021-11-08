@@ -9,7 +9,7 @@ inputs:
   source:
     description: 'The service that provides the SARIF file'
     required: false
-  problems-path:
+  report-path:
     description: 'The path to the SARIF file'
     required: true
 runs:

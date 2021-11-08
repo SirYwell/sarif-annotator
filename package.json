@@ -8,10 +8,11 @@
     "build": "tsc",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src/**/*.ts --fix",
     "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
+    "almost-all": "npm run build && npm run lint && npm run package && npm test"
   },
   "repository": {
     "type": "git",
@@ -27,10 +28,13 @@
   "dependencies": {
     "@actions/core": "^1.6.0",
     "@actions/github": "^5.0.0",
-    "@types/sarif": "^2.1.4"
+    "@actions/io": "^1.1.1",
+    "@types/sarif": "^2.1.4",
+    "ramda": "^0.27.1"
   },
   "devDependencies": {
     "@types/node": "^16.10.5",
+    "@types/ramda": "^0.27.47",
     "@typescript-eslint/parser": "^5.0.0",
     "@vercel/ncc": "^0.31.1",
     "eslint": "^7.32.0",
