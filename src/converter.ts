@@ -22,14 +22,13 @@ export class Converter {
     return ''
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected createText(log: Log): string | null {
-    return null
+  protected createText(log: Log): string {
+    return log.runs[0].tool.driver.name
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected createAnnotations(log: Log): Annotation[] | null {
-    return null
+  protected createAnnotations(log: Log): Annotation[] {
+    return []
   }
 }
 
@@ -51,6 +50,6 @@ export interface Annotation {
 export interface Output {
   title: string
   summary: string
-  text?: string | null
-  annotations?: Annotation[] | null
+  text: string
+  annotations: Annotation[]
 }
