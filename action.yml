@@ -12,6 +12,10 @@ inputs:
   report-path:
     description: 'The path to the SARIF file'
     required: true
+  baseline-state-filter:
+    description: 'A comma-separated list of baseline states to include. If none is set, all results are included'
+    default: ''
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'

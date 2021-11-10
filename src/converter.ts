@@ -1,7 +1,14 @@
 // eslint-disable-next-line import/no-unresolved
 import {Log} from 'sarif'
+import {BaselineState} from './main'
 
 export class Converter {
+  protected config: ConverterConfig
+
+  constructor(config: ConverterConfig) {
+    this.config = config
+  }
+
   convert(log: Log): Output {
     return {
       title: this.createTitle(log),
@@ -52,4 +59,8 @@ export interface Output {
   summary: string
   text: string
   annotations: Annotation[]
+}
+
+export interface ConverterConfig {
+  baselineStates: BaselineState[] | null
 }

@@ -1,9 +1,14 @@
-import {Annotation, AnnotationLevel, Converter} from './converter'
+import {Annotation, AnnotationLevel, Converter, ConverterConfig} from './converter'
 // eslint-disable-next-line import/no-unresolved
 import {Log, Message, Result} from 'sarif'
 import {groupWith} from 'ramda'
 
 export class QodanaConverter extends Converter {
+
+  constructor(config: ConverterConfig) {
+    super(config)
+  }
+
   createTitle(log: Log): string {
     return `${log.runs[0].tool.driver.fullName ?? 'Qodana'} Report`
   }
@@ -24,7 +29,16 @@ export class QodanaConverter extends Converter {
     if (!log.runs[0].results) {
       return []
     }
-    return log.runs[0].results.map(result => createAnnotation(result)).filter(notEmpty)
+    const baselineMatches = (result: Result): boolean => {
+      if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
+        return true // "all" filter
+      }
+      if (!result.baselineState) {
+        return false // not available but should be
+      }
+      return this.config.baselineStates.includes(result.baselineState)
+    }
+    return log.runs[0].results?.filter(baselineMatches).map(result => createAnnotation(result)).filter(notEmpty)
   }
 }
 
@@ -32,6 +46,7 @@ function createAnnotation(result: Result): Annotation | null {
   if (!result.locations) {
     return null
   }
+  result.baselineState
   const physLoc = result.locations[0].physicalLocation
   if (
     !physLoc ||
