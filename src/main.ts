@@ -88,6 +88,7 @@ async function run(): Promise<void> {
   try {
     const converter = createConverter()
     const path = getInput('report-path')
+    core.info(`read sarif log from path '${path}'`)
     const log: Log = JSON.parse(fs.readFileSync(path, 'UTF-8' as BufferEncoding))
     // we need to split annotations into groups
     // but as we're lazy, we just mutate the output object
