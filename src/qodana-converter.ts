@@ -10,11 +10,11 @@ export class QodanaConverter extends Converter {
 
   createSummary(log: Log): string {
     // As of now, Qodana only generates files with one run
-    return `A total of ${log.runs[0].results?.length} problem(s) were found.`
+    return `A total of ${this.filteredResults(log).length} problem(s) were found.`
   }
 
   createText(log: Log): string {
-    return groupWith((a, b) => a.ruleId === b.ruleId, log.runs[0].results ?? [])
+    return groupWith((a, b) => a.ruleId === b.ruleId, this.filteredResults(log))
       .sort((a, b) => b.length - a.length)
       .map(a => `${a.length}x ${a[0].ruleId}`)
       .join('\n')
@@ -24,7 +24,10 @@ export class QodanaConverter extends Converter {
     if (!log.runs[0].results) {
       return []
     }
-    return log.runs[0].results.map(result => createAnnotation(result)).filter(notEmpty)
+
+    return this.filteredResults(log)
+      .map(result => createAnnotation(result))
+      .filter(notEmpty)
   }
 }
 
@@ -32,6 +35,7 @@ function createAnnotation(result: Result): Annotation | null {
   if (!result.locations) {
     return null
   }
+  result.baselineState
   const physLoc = result.locations[0].physicalLocation
   if (
     !physLoc ||

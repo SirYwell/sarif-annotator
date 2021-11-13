@@ -9,6 +9,9 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Converter = void 0;
 class Converter {
+    constructor(config) {
+        this.config = config;
+    }
     convert(log) {
         return {
             title: this.createTitle(log),
@@ -32,6 +35,19 @@ class Converter {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     createAnnotations(log) {
         return [];
+    }
+    filteredResults(log) {
+        var _a, _b;
+        const baselineMatches = (result) => {
+            if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
+                return true; // "all" filter
+            }
+            if (!result.baselineState) {
+                return false; // not available but should be
+            }
+            return this.config.baselineStates.includes(result.baselineState);
+        };
+        return (_b = (_a = log.runs[0].results) === null || _a === void 0 ? void 0 : _a.filter(baselineMatches)) !== null && _b !== void 0 ? _b : [];
     }
 }
 exports.Converter = Converter;
@@ -81,14 +97,14 @@ const qodana_converter_1 = __nccwpck_require__(7578);
 const core_1 = __nccwpck_require__(2186);
 const ramda_1 = __nccwpck_require__(4119);
 const MAX_ANNOTATIONS_PER_REQUEST = 50;
-function createConverter() {
+function createConverter(config) {
     switch ((0, core_1.getInput)('source').toLowerCase()) {
         case 'qodana':
             core.info('using QodanaConverter');
-            return new qodana_converter_1.QodanaConverter();
+            return new qodana_converter_1.QodanaConverter(config);
         default:
             core.warning(`no matching converter found. Falling back.`);
-            return new converter_1.Converter();
+            return new converter_1.Converter(config);
     }
 }
 function publishOutput(output, conclusion) {
@@ -129,8 +145,15 @@ function calcConclusion(output) {
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const converter = createConverter();
+            const config = {
+                baselineStates: (0, core_1.getInput)('baseline-state-filter')
+                    .split(',')
+                    .filter((s) => s !== undefined)
+            };
+            core.info(`Using config: ${JSON.stringify(config)}`);
+            const converter = createConverter(config);
             const path = (0, core_1.getInput)('report-path');
+            core.info(`read sarif log from path '${path}'`);
             const log = JSON.parse(fs.readFileSync(path, 'UTF-8'));
             // we need to split annotations into groups
             // but as we're lazy, we just mutate the output object
@@ -167,13 +190,11 @@ class QodanaConverter extends converter_1.Converter {
         return `${(_a = log.runs[0].tool.driver.fullName) !== null && _a !== void 0 ? _a : 'Qodana'} Report`;
     }
     createSummary(log) {
-        var _a;
         // As of now, Qodana only generates files with one run
-        return `A total of ${(_a = log.runs[0].results) === null || _a === void 0 ? void 0 : _a.length} problem(s) were found.`;
+        return `A total of ${this.filteredResults(log).length} problem(s) were found.`;
     }
     createText(log) {
-        var _a;
-        return (0, ramda_1.groupWith)((a, b) => a.ruleId === b.ruleId, (_a = log.runs[0].results) !== null && _a !== void 0 ? _a : [])
+        return (0, ramda_1.groupWith)((a, b) => a.ruleId === b.ruleId, this.filteredResults(log))
             .sort((a, b) => b.length - a.length)
             .map(a => `${a.length}x ${a[0].ruleId}`)
             .join('\n');
@@ -182,7 +203,9 @@ class QodanaConverter extends converter_1.Converter {
         if (!log.runs[0].results) {
             return [];
         }
-        return log.runs[0].results.map(result => createAnnotation(result)).filter(notEmpty);
+        return this.filteredResults(log)
+            .map(result => createAnnotation(result))
+            .filter(notEmpty);
     }
 }
 exports.QodanaConverter = QodanaConverter;
@@ -190,6 +213,7 @@ function createAnnotation(result) {
     if (!result.locations) {
         return null;
     }
+    result.baselineState;
     const physLoc = result.locations[0].physicalLocation;
     if (!physLoc ||
         !physLoc.region ||

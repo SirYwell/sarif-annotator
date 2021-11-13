@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
-import {Converter, Output} from './converter'
+import {Converter, ConverterConfig, Output} from './converter'
 import {context, getOctokit} from '@actions/github'
 import BufferEncoding from 'buffer'
 // eslint-disable-next-line import/no-unresolved
@@ -21,14 +21,16 @@ type Conclusion =
   | 'stale' // not settable via API, just for completeness
   | 'timed_out'
 
-function createConverter(): Converter {
+export type BaselineState = 'new' | 'unchanged' | 'updated' | 'absent'
+
+function createConverter(config: ConverterConfig): Converter {
   switch (getInput('source').toLowerCase()) {
     case 'qodana':
       core.info('using QodanaConverter')
-      return new QodanaConverter()
+      return new QodanaConverter(config)
     default:
       core.warning(`no matching converter found. Falling back.`)
-      return new Converter()
+      return new Converter(config)
   }
 }
 
@@ -86,7 +88,13 @@ function calcConclusion(output: Output): Conclusion {
 
 async function run(): Promise<void> {
   try {
-    const converter = createConverter()
+    const config = {
+      baselineStates: getInput('baseline-state-filter')
+        .split(',')
+        .filter((s): s is BaselineState => s !== undefined)
+    }
+    core.info(`Using config: ${JSON.stringify(config)}`)
+    const converter = createConverter(config)
     const path = getInput('report-path')
     core.info(`read sarif log from path '${path}'`)
     const log: Log = JSON.parse(fs.readFileSync(path, 'UTF-8' as BufferEncoding))

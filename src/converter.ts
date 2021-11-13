@@ -1,7 +1,14 @@
 // eslint-disable-next-line import/no-unresolved
-import {Log} from 'sarif'
+import {Log, Result} from 'sarif'
+import {BaselineState} from './main'
 
 export class Converter {
+  private config: ConverterConfig
+
+  constructor(config: ConverterConfig) {
+    this.config = config
+  }
+
   convert(log: Log): Output {
     return {
       title: this.createTitle(log),
@@ -30,6 +37,19 @@ export class Converter {
   protected createAnnotations(log: Log): Annotation[] {
     return []
   }
+
+  protected filteredResults(log: Log): Result[] {
+    const baselineMatches = (result: Result): boolean => {
+      if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
+        return true // "all" filter
+      }
+      if (!result.baselineState) {
+        return false // not available but should be
+      }
+      return this.config.baselineStates.includes(result.baselineState)
+    }
+    return log.runs[0].results?.filter(baselineMatches) ?? []
+  }
 }
 
 export type AnnotationLevel = 'notice' | 'warning' | 'failure'
@@ -52,4 +72,8 @@ export interface Output {
   summary: string
   text: string
   annotations: Annotation[]
+}
+
+export interface ConverterConfig {
+  baselineStates: BaselineState[] | null
 }
