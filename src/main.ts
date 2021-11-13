@@ -89,9 +89,11 @@ function calcConclusion(output: Output): Conclusion {
 async function run(): Promise<void> {
   try {
     const config = {
-      baselineStates: getInput('baseline-state-filter').split(',')
+      baselineStates: getInput('baseline-state-filter')
+        .split(',')
         .filter((s): s is BaselineState => s !== undefined)
     }
+    core.info(`Using config: ${JSON.stringify(config)}`)
     const converter = createConverter(config)
     const path = getInput('report-path')
     core.info(`read sarif log from path '${path}'`)

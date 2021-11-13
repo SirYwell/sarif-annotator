@@ -1,14 +1,9 @@
-import {Annotation, AnnotationLevel, Converter, ConverterConfig} from './converter'
+import {Annotation, AnnotationLevel, Converter} from './converter'
 // eslint-disable-next-line import/no-unresolved
 import {Log, Message, Result} from 'sarif'
 import {groupWith} from 'ramda'
 
 export class QodanaConverter extends Converter {
-
-  constructor(config: ConverterConfig) {
-    super(config)
-  }
-
   createTitle(log: Log): string {
     return `${log.runs[0].tool.driver.fullName ?? 'Qodana'} Report`
   }
@@ -38,7 +33,10 @@ export class QodanaConverter extends Converter {
       }
       return this.config.baselineStates.includes(result.baselineState)
     }
-    return log.runs[0].results?.filter(baselineMatches).map(result => createAnnotation(result)).filter(notEmpty)
+    return log.runs[0].results
+      .filter(baselineMatches)
+      .map(result => createAnnotation(result))
+      .filter(notEmpty)
   }
 }
 

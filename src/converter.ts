@@ -1,6 +1,6 @@
+import {BaselineState} from './main'
 // eslint-disable-next-line import/no-unresolved
 import {Log} from 'sarif'
-import {BaselineState} from './main'
 
 export class Converter {
   protected config: ConverterConfig
