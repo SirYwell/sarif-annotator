@@ -1,9 +1,9 @@
-import {BaselineState} from './main'
 // eslint-disable-next-line import/no-unresolved
-import {Log} from 'sarif'
+import {Log, Result} from 'sarif'
+import {BaselineState} from './main'
 
 export class Converter {
-  protected config: ConverterConfig
+  private config: ConverterConfig
 
   constructor(config: ConverterConfig) {
     this.config = config
@@ -36,6 +36,19 @@ export class Converter {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected createAnnotations(log: Log): Annotation[] {
     return []
+  }
+
+  protected filteredResults(log: Log): Result[] {
+    const baselineMatches = (result: Result): boolean => {
+      if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
+        return true // "all" filter
+      }
+      if (!result.baselineState) {
+        return false // not available but should be
+      }
+      return this.config.baselineStates.includes(result.baselineState)
+    }
+    return log.runs[0].results?.filter(baselineMatches) ?? []
   }
 }
 

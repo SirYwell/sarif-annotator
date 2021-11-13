@@ -10,11 +10,11 @@ export class QodanaConverter extends Converter {
 
   createSummary(log: Log): string {
     // As of now, Qodana only generates files with one run
-    return `A total of ${log.runs[0].results?.length} problem(s) were found.`
+    return `A total of ${this.filteredResults(log).length} problem(s) were found.`
   }
 
   createText(log: Log): string {
-    return groupWith((a, b) => a.ruleId === b.ruleId, log.runs[0].results ?? [])
+    return groupWith((a, b) => a.ruleId === b.ruleId, this.filteredResults(log))
       .sort((a, b) => b.length - a.length)
       .map(a => `${a.length}x ${a[0].ruleId}`)
       .join('\n')
@@ -24,17 +24,8 @@ export class QodanaConverter extends Converter {
     if (!log.runs[0].results) {
       return []
     }
-    const baselineMatches = (result: Result): boolean => {
-      if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
-        return true // "all" filter
-      }
-      if (!result.baselineState) {
-        return false // not available but should be
-      }
-      return this.config.baselineStates.includes(result.baselineState)
-    }
-    return log.runs[0].results
-      .filter(baselineMatches)
+
+    return this.filteredResults(log)
       .map(result => createAnnotation(result))
       .filter(notEmpty)
   }

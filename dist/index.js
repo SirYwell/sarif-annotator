@@ -36,6 +36,19 @@ class Converter {
     createAnnotations(log) {
         return [];
     }
+    filteredResults(log) {
+        var _a, _b;
+        const baselineMatches = (result) => {
+            if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
+                return true; // "all" filter
+            }
+            if (!result.baselineState) {
+                return false; // not available but should be
+            }
+            return this.config.baselineStates.includes(result.baselineState);
+        };
+        return (_b = (_a = log.runs[0].results) === null || _a === void 0 ? void 0 : _a.filter(baselineMatches)) !== null && _b !== void 0 ? _b : [];
+    }
 }
 exports.Converter = Converter;
 
@@ -177,13 +190,11 @@ class QodanaConverter extends converter_1.Converter {
         return `${(_a = log.runs[0].tool.driver.fullName) !== null && _a !== void 0 ? _a : 'Qodana'} Report`;
     }
     createSummary(log) {
-        var _a;
         // As of now, Qodana only generates files with one run
-        return `A total of ${(_a = log.runs[0].results) === null || _a === void 0 ? void 0 : _a.length} problem(s) were found.`;
+        return `A total of ${this.filteredResults(log).length} problem(s) were found.`;
     }
     createText(log) {
-        var _a;
-        return (0, ramda_1.groupWith)((a, b) => a.ruleId === b.ruleId, (_a = log.runs[0].results) !== null && _a !== void 0 ? _a : [])
+        return (0, ramda_1.groupWith)((a, b) => a.ruleId === b.ruleId, this.filteredResults(log))
             .sort((a, b) => b.length - a.length)
             .map(a => `${a.length}x ${a[0].ruleId}`)
             .join('\n');
@@ -192,17 +203,7 @@ class QodanaConverter extends converter_1.Converter {
         if (!log.runs[0].results) {
             return [];
         }
-        const baselineMatches = (result) => {
-            if (!this.config.baselineStates || this.config.baselineStates.length === 0) {
-                return true; // "all" filter
-            }
-            if (!result.baselineState) {
-                return false; // not available but should be
-            }
-            return this.config.baselineStates.includes(result.baselineState);
-        };
-        return log.runs[0].results
-            .filter(baselineMatches)
+        return this.filteredResults(log)
             .map(result => createAnnotation(result))
             .filter(notEmpty);
     }
