@@ -97,6 +97,9 @@ const qodana_converter_1 = __nccwpck_require__(7578);
 const core_1 = __nccwpck_require__(2186);
 const ramda_1 = __nccwpck_require__(4119);
 const MAX_ANNOTATIONS_PER_REQUEST = 50;
+function isCategory(input) {
+    return input === 'new' || input === 'unchanged' || input === 'updated' || input === 'absent';
+}
 function createConverter(config) {
     switch ((0, core_1.getInput)('source').toLowerCase()) {
         case 'qodana':
@@ -148,7 +151,7 @@ function run() {
             const config = {
                 baselineStates: (0, core_1.getInput)('baseline-state-filter')
                     .split(',')
-                    .filter((s) => s !== undefined)
+                    .filter(isCategory)
             };
             core.info(`Using config: ${JSON.stringify(config)}`);
             const converter = createConverter(config);

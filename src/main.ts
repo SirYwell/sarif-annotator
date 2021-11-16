@@ -24,7 +24,7 @@ type Conclusion =
 export type BaselineState = 'new' | 'unchanged' | 'updated' | 'absent'
 
 function isCategory(input?: string): input is BaselineState {
-  return input === 'new' || input === 'unchanged' || input === 'updated' || input === 'absent';
+  return input === 'new' || input === 'unchanged' || input === 'updated' || input === 'absent'
 }
 
 function createConverter(config: ConverterConfig): Converter {
@@ -93,9 +93,7 @@ function calcConclusion(output: Output): Conclusion {
 async function run(): Promise<void> {
   try {
     const config = {
-      baselineStates: getInput('baseline-state-filter')
-        .split(',')
-        .filter(isCategory)
+      baselineStates: getInput('baseline-state-filter').split(',').filter(isCategory)
     }
     core.info(`Using config: ${JSON.stringify(config)}`)
     const converter = createConverter(config)
