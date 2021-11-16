@@ -23,6 +23,10 @@ type Conclusion =
 
 export type BaselineState = 'new' | 'unchanged' | 'updated' | 'absent'
 
+function isCategory(input?: string): input is BaselineState {
+  return input === 'new' || input === 'unchanged' || input === 'updated' || input === 'absent';
+}
+
 function createConverter(config: ConverterConfig): Converter {
   switch (getInput('source').toLowerCase()) {
     case 'qodana':
@@ -91,7 +95,7 @@ async function run(): Promise<void> {
     const config = {
       baselineStates: getInput('baseline-state-filter')
         .split(',')
-        .filter((s): s is BaselineState => s !== undefined)
+        .filter(isCategory)
     }
     core.info(`Using config: ${JSON.stringify(config)}`)
     const converter = createConverter(config)
