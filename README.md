@@ -4,6 +4,8 @@
 
 # SARIF Annotator
 
+### :rotating_light: Note: This action is not maintained anymore. Use the functionality provided by [Qodana Action](https://github.com/marketplace/actions/qodana-scan) instead. :rotating_light:
+
 This action lets you annotate your code based on SARIF files. Currently, it mainly supports
 [Qodana](https://www.jetbrains.com/help/qodana/qodana-sarif-output.html).
 
